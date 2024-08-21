@@ -1,0 +1,17 @@
+= 상품 (Product)
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+== 상품 생성
+operation::product-create[snippets='http-request,http-response,response-fields']
+=== curl 요청 예시
+include::{snippets}/product-create/curl-request.adoc[]
+
+== 상품 조회
+operation::product-get[snippets='http-request,http-response,response-fields']
+
+

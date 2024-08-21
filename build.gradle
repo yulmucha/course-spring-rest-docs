@@ -22,9 +22,22 @@ ext {
     set('snippetsDir', file("build/generated-snippets"))
 }
 
+// asciidoctorExt라는 이름의 구성 선언
+configurations {
+    asciidoctorExt
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    /*
+    * asciidoctorExt 구성에서 spring-restdocs-asciidoctor에 대한 종속성을 추가; asciidoctor 태스크에서만 사용할 의존성
+    * 다음과 같이 자동 구성됨: .adoc 파일에서 {snippets} -> build/generated-snippets
+    * 또한 operation block macro 사용 가능
+    * */
+    asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
+
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -34,7 +47,26 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// asciidoctor 태스크는 id 'org.asciidoctor.jvm.convert' 플러그인을 적용함으로써 자동으로 생성됨
+// AsciiDoc 문서 -> HTML 변환 담당
 tasks.named('asciidoctor') {
+    configurations 'asciidoctorExt' // asciidoctor 태스크에서 사용할 별도의 의존성 구성(dependency configuration)을 지정
+//	baseDirFollowsSourceFile() // 기본값이라 없어도 됨
     inputs.dir snippetsDir
     dependsOn test
+}
+
+tasks.named('clean') {
+    delete file('src/main/resources/static/docs')
+}
+
+task copyDocument(type: Copy) { // (12)
+    dependsOn asciidoctor
+//	from file("build/docs/asciidoc")
+    from asciidoctor.outputDir
+    into file("src/main/resources/static/docs")
+}
+
+build {
+    dependsOn copyDocument
 }
