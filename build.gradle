@@ -56,17 +56,28 @@ tasks.named('asciidoctor') {
     dependsOn test
 }
 
-tasks.named('clean') {
-    delete file('src/main/resources/static/docs')
+tasks.register('copyDocument', Copy) {
+    dependsOn tasks.asciidoctor
+    from tasks.asciidoctor.outputDir
+    into layout.buildDirectory.dir("resources/main/static/docs")
 }
 
-task copyDocument(type: Copy) { // (12)
-    dependsOn asciidoctor
-//	from file("build/docs/asciidoc")
-    from asciidoctor.outputDir
-    into file("src/main/resources/static/docs")
+// resolveMainClassName 태스크에 명시적 의존성 추가
+tasks.named('resolveMainClassName') {
+    dependsOn tasks.copyDocument
 }
 
-build {
-    dependsOn copyDocument
+// 모든 Jar 관련 태스크에 대한 의존성 설정
+tasks.withType(Jar).configureEach {
+    dependsOn tasks.copyDocument
+}
+
+// 모든 JavaExec 태스크에 의존성 추가 (IntelliJ 실행 태스크 포함)
+tasks.withType(JavaExec).configureEach {
+    dependsOn tasks.copyDocument
+}
+
+// processResources 태스크가 완료된 후 copyDocument가 실행되도록 설정
+tasks.named('processResources') {
+    finalizedBy tasks.copyDocument
 }
